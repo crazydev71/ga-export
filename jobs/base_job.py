@@ -14,3 +14,4 @@ class BaseJob(object):
 
     def _end(self):
         pass
+

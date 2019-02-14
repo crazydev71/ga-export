@@ -1,3 +1,6 @@
+# FileSafeExecutor
+
+
 class FailSafeExecutor:
 
     def __init__(self, delegate):
