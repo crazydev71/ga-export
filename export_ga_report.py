@@ -1,18 +1,28 @@
 import argparse
 
-from apiclient.discovery import build
 import httplib2
+from apiclient.discovery import build
 from oauth2client import client
 from oauth2client import file
 from oauth2client import tools
+from google.oauth2 import service_account
 
 from jobs.ga_export_job import GAExportJob
+from jobs.exporters.big_query_exporter import BigQueryExporter
 
 
-DISCOVERY_URI = 'https://analyticsreporting.googleapis.com/$discovery/rest'
-SCOPES = ['https://www.googleapis.com/auth/analytics.readonly']
-CLIENT_SECRETS_PATH = './config/client_secret.json'
-VIEW_ID = '188060893'
+ANALYTICS_REPORT_DISCOVERY_URI = 'https://analyticsreporting.googleapis.com/$discovery/rest'
+ANALYTICS_REPORT_SCOPES = ['https://www.googleapis.com/auth/analytics.readonly']
+ANALYTICS_REPORT_CLIENT_SECRETS_PATH = './config/client_secret.json'
+ANALYTICS_REPORT_VIEW_ID = '188060893'
+
+BIG_QUERY_PROJECT_ID = 'bigquery-data-infrastructure'
+BIG_QUERY_SERVICE_ACCOUNT_SECRETS_PATH = './config/service_account.json'
+BIG_QUERY_SCOPES = [
+    'https://www.googleapis.com/auth/cloud-platform',
+    'https://www.googleapis.com/auth/bigquery'
+]
+BIG_QUERY_TABLE_NAME = 'ga.ga_report'
 
 
 def initialize_analytics_reporting():
@@ -29,8 +39,9 @@ def initialize_analytics_reporting():
 
     # Set up a Flow object to be used if we need to authenticate.
     flow = client.flow_from_clientsecrets(
-        CLIENT_SECRETS_PATH, scope=SCOPES,
-        message=tools.message_if_missing(CLIENT_SECRETS_PATH))
+        filename=ANALYTICS_REPORT_CLIENT_SECRETS_PATH,
+        scope=ANALYTICS_REPORT_SCOPES,
+        message=tools.message_if_missing(ANALYTICS_REPORT_CLIENT_SECRETS_PATH))
 
     # Prepare credentials, and authorize HTTP object with them.
     # If the credentials don't exist or are invalid run through the native client
@@ -43,14 +54,32 @@ def initialize_analytics_reporting():
     http = credentials.authorize(http=httplib2.Http())
 
     # Build the service object.
-    analytics = build('analytics', 'v4', http=http, discoveryServiceUrl=DISCOVERY_URI)
+    analytics = build('analytics', 'v4', http=http, discoveryServiceUrl=ANALYTICS_REPORT_DISCOVERY_URI)
 
     return analytics
 
 
+def initialize_service_account_credentials():
+    credentials = service_account.Credentials.from_service_account_file(
+        BIG_QUERY_SERVICE_ACCOUNT_SECRETS_PATH)
+    credentials = credentials.with_scopes(BIG_QUERY_SCOPES)
+
+    return credentials
+
+
 def main():
-    analytics = initialize_analytics_reporting()
-    ga_export_job = GAExportJob(analytics, VIEW_ID, '7daysAgo', 'today')
+    big_query_exporter = BigQueryExporter(
+        credentials=initialize_service_account_credentials(),
+        project_id=BIG_QUERY_PROJECT_ID,
+        table_name=BIG_QUERY_TABLE_NAME)
+
+    ga_export_job = GAExportJob(
+        analytics=initialize_analytics_reporting(),
+        view_id=ANALYTICS_REPORT_VIEW_ID,
+        start_date='7daysAgo',
+        end_date='today',
+        exporter=big_query_exporter)
+
     ga_export_job.run()
 
 

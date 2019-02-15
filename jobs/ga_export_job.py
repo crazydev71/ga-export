@@ -5,11 +5,12 @@ import pandas as pd
 
 
 class GAExportJob(BaseJob):
-    def __init__(self, analytics, view_id, start_date, end_date, ):
+    def __init__(self, analytics, view_id, start_date, end_date, exporter):
         self.analytics = analytics
         self.view_id = view_id
         self.start_date = start_date
         self.end_date = end_date
+        self.exporter = exporter
 
     def _start(self):
         pass
@@ -28,7 +29,7 @@ class GAExportJob(BaseJob):
         ).execute()
         df = self.format_response(response)
         print(df)
-        return df
+        self.exporter.export(df)
 
     def _print_response(self, response):
         """Parses and prints the Analytics Reporting API V4 response.
@@ -84,5 +85,8 @@ class GAExportJob(BaseJob):
 
                 data_list.append(row_dict)
 
-            df = pd.DataFrame(data_list)
-            return df
+        df = pd.DataFrame(data_list)
+        column_dict = { column: column.replace(':', '_') for column in df.columns}
+        df = df.rename(index=str, columns=column_dict)
+
+        return df
