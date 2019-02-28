@@ -28,7 +28,6 @@ class GAExportJob(BaseJob):
             }
         ).execute()
         df = self.format_response(response)
-        print(df)
         self.exporter.export(df)
 
     def _print_response(self, response):

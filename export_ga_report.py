@@ -10,12 +10,13 @@ from google.oauth2 import service_account
 from jobs.ga_export_job import GAExportJob
 from jobs.exporters.big_query_exporter import BigQueryExporter
 
-
+# GA report API access necessities
 ANALYTICS_REPORT_DISCOVERY_URI = 'https://analyticsreporting.googleapis.com/$discovery/rest'
 ANALYTICS_REPORT_SCOPES = ['https://www.googleapis.com/auth/analytics.readonly']
 ANALYTICS_REPORT_CLIENT_SECRETS_PATH = './config/client_secret.json'
 ANALYTICS_REPORT_VIEW_ID = '188060893'
 
+# BigQuery API access necessities
 BIG_QUERY_PROJECT_ID = 'bigquery-data-infrastructure'
 BIG_QUERY_SERVICE_ACCOUNT_SECRETS_PATH = './config/service_account.json'
 BIG_QUERY_SCOPES = [
