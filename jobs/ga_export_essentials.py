@@ -30,29 +30,6 @@ class GAExportJob(BaseJob):
         df = self.format_response(response)
         self.exporter.export(df)
 
-    def _print_response(self, response):
-        """Parses and prints the Analytics Reporting API V4 response.
-
-        Args:
-          response: An Analytics Reporting API V4 response.
-        """
-        for report in response.get('reports', []):
-            column_header = report.get('columnHeader', {})
-            dimension_headers = column_header.get('dimensions', [])
-            metric_headers = column_header.get('metricHeader', {}).get('metricHeaderEntries', [])
-
-            for row in report.get('data', {}).get('rows', []):
-                dimensions = row.get('dimensions', [])
-                date_range_values = row.get('metrics', [])
-
-                for header, dimension in zip(dimension_headers, dimensions):
-                    print(header + ': ' + dimension)
-
-                for i, values in enumerate(date_range_values):
-                    print('Date range: ' + str(i))
-                    for metric_header, value in zip(metric_headers, values.get('values')):
-                        print(metric_header.get('name') + ': ' + value)
-
     def format_response(self, response):
         data_list = []
         # get report data
